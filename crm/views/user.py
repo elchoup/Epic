@@ -14,11 +14,8 @@ ROLES = ["commercial", "support", "gestion"]
 
 def prompt_for_role():
     role_name = typer.prompt("Choisissez un rôle parmi commercial, support ou gestion")
-    while role_name not in ROLES:
-        typer.echo("Le role choisi n'est pas dans les roles disponibles")
-        role_name = typer.prompt(
-            "Choisissez un rôle parmi commercial, support ou gestion"
-        )
+    if role_name not in ROLES:
+        return None
     return role_name
 
 
@@ -31,16 +28,18 @@ def create_user(
     ],
     role_name: str = typer.Option(prompt_for_role),
 ):
-
+    if not role_name:
+        typer.echo("Error role choosen is invalid")
+        raise typer.Exit(code=1)
     try:
         role, created = Role.get_or_create(name=role_name)
         hashed_password = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
         User.create(name=name, email=email, password=hashed_password, role=role)
         if created:
-            typer.echo(f"le rôle '{role_name}' à été créé")
-        typer.echo("Utilisateur crée avec succés")
+            typer.echo(f"Role '{role_name}' created succesfully")
+        typer.echo("User created successfully")
     except Exception as e:
-        return typer.echo(f"Erreur : {e}")
+        return typer.echo(f"Error : {e}")
 
 
 @app.command()
@@ -51,11 +50,11 @@ def login(
     try:
         user = User.get(name=name)
         if bcrypt.checkpw(password.encode(), user.password.encode()):
-            typer.echo(f"Vous êtes connecté en tant que {name}")
+            typer.echo(f"Welcome {name}")
         else:
-            typer.echo("Mot de passe incorrect")
+            typer.echo("Wrong password")
     except:
-        typer.echo(f"Utilisateur non trouvé")
+        typer.echo(f"User not found")
 
 
 @app.command(name="list-users")

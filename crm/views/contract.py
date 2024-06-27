@@ -180,5 +180,27 @@ def update_contract(
         typer.echo(f"error: {e}")
 
 
+"""@app.command()
+def update_test_contract(
+    contract_id: Annotated[
+        int, typer.Option(..., prompt=True, help="ID of the contract")
+    ],
+    total_amount: Annotated[
+        int, typer.Option(
+        ..., "-t", prompt=True, help="Total amount of the contract"
+    )],
+    remaining_amount: int = typer.Option(
+        ..., "-r", prompt=True, help="Remaining amount to be paid"
+    ),
+    status: bool = typer.Option(
+        ..., "--sign", prompt=True, help="Indicate if the contract is signed or not"
+    ),
+    created_at: datetime = datetime.now(),
+):
+    try:
+        contract = Contract.get(id=contract_id)
+        status = sign(contract)"""
+
+
 if __name__ == "__main__":
     app()

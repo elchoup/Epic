@@ -14,8 +14,3 @@ app.add_typer(event_app, name="event")
 
 if __name__ == "__main__":
     app()
-
-
-"""username: Annotated[
-        str, typer.Option("-u", prompt=True, help="The name of the user.")
-    ],"""
