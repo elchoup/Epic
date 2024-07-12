@@ -2,19 +2,34 @@ import typer
 from typing_extensions import Annotated
 from crm.models.contract import Contract
 from crm.models.event import Event
+from crm.models.user import User
 from datetime import datetime, date
+from crm.auth import auth_required, check_user_and_permissions
 
 app = typer.Typer()
 
 
 def find_contract():
-    contract_id = typer.prompt("Entrer l'id du contrat")
+    contract_id = typer.prompt("Enter the id of the contract")
     try:
         contract = Contract.get(id=contract_id)
     except Contract.DoesNotExist:
         typer.echo("Contrat non trouvé")
-        find_contract()
+        return
     return contract
+
+
+def find_user():
+    user_id = typer.prompt("Enter the id of the support user")
+    try:
+        user = User.get(id=user_id)
+        if not user.role.name == "Support":
+            typer.echo("Only a support user can be assigned")
+            return
+    except User.DoesNotExist:
+        typer.echo("User not found")
+        return
+    return user
 
 
 def prompt_date(prompt_text):
@@ -27,6 +42,7 @@ def prompt_date(prompt_text):
 
 
 @app.command()
+@auth_required
 def create_event(
     name: Annotated[str, typer.Option("-na", prompt=True, help="Name of the event")],
     location: Annotated[
@@ -36,11 +52,17 @@ def create_event(
         int, typer.Option("-a", prompt=True, help="number of attendees")
     ],
     notes: Annotated[str, typer.Option("-no", prompt=True, help="notes")],
+    user=None,
 ):
     try:
+        if not check_user_and_permissions(user, "create-event"):
+            return
+        support_contact = find_user()
+        contract = find_contract()
+        if not user.has_permission_own(contract.commercial_contact):
+            return
         start_date = prompt_date("Start date YYYY-MM-DD")
         end_date = prompt_date("End date YYYY-MM-DD")
-        contract = find_contract()
         existing_event = Event.select().where(Event.contract == contract).first()
         if existing_event:
             typer.echo("Un événement existe déjà pour ce contrat.")
@@ -53,6 +75,7 @@ def create_event(
             notes=notes,
             start_date=start_date,
             end_date=end_date,
+            support_contact=support_contact,
         )
         typer.echo("Event created succesfully")
         typer.echo(f"Event id: {event.id}")
@@ -61,11 +84,17 @@ def create_event(
 
 
 @app.command()
+@auth_required
 def delete_event(
-    event_id: int = typer.Option(..., "-i", prompt=True, help="id of the event")
+    event_id: int = typer.Option(..., "-i", prompt=True, help="id of the event"),
+    user=None,
 ):
     try:
+        if not check_user_and_permissions(user, "delete-event"):
+            return
         event = Event.get(id=event_id)
+        if not user.has_permission_own(event.support_contact):
+            return
         event.delete_instance()
         typer.echo(f"Event with id : {event_id} deleted succesfully")
     except Event.DoesNotExist:
@@ -75,8 +104,11 @@ def delete_event(
 
 
 @app.command(name="list-events")
-def list_events():
+@auth_required
+def list_events(user=None):
     try:
+        if not check_user_and_permissions(user, "list-event"):
+            return
         events = Event.select()
         if not events:
             typer.echo("No events in the database")
@@ -92,15 +124,19 @@ def list_events():
 
 
 @app.command()
+@auth_required
 def get_event(
     event_id: int = typer.Option(
         ...,
         "-i",
         prompt="Enter id of the event you want to see the details of",
         help="ID of the event",
-    )
+    ),
+    user=None,
 ):
     try:
+        if not check_user_and_permissions(user, "get-event"):
+            return
         event = Event.get(id=event_id)
         typer.echo(
             f"Events n°{event.id}: Name: {event.name}, Contract n°: {event.contract.id}, "
@@ -114,16 +150,22 @@ def get_event(
 
 
 @app.command()
+@auth_required
 def update_event(
     event_id: int = typer.Option(
         ...,
         "-i",
         prompt="Enter id of the event you want to see the details of",
         help="ID of the event",
-    )
+    ),
+    user=None,
 ):
     try:
+        if not check_user_and_permissions(user, "update-event"):
+            return
         event = Event.get(id=event_id)
+        if not user.has_permission_own(event.support_contact):
+            return
         typer.echo(
             f"Details of event n°{event.id}"
             f"Events n°{event.id}: Name: {event.name}, Contract n°: {event.contract.id}, "

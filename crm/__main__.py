@@ -1,8 +1,9 @@
 import typer
-from .views.client import app as client_app
-from .views.user import app as user_app
-from .views.contract import app as contract_app
-from .views.event import app as event_app
+from crm.views.client import app as client_app
+from crm.views.user import app as user_app
+from crm.views.contract import app as contract_app
+from crm.views.event import app as event_app
+
 
 app = typer.Typer()
 

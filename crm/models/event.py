@@ -1,7 +1,7 @@
 from peewee import *
 from .contract import Contract
 from .user import User
-from . import db
+from crm.config import db
 
 
 class Event(Model):

@@ -1,5 +1,5 @@
 from peewee import *
-from . import db
+from crm.config import db
 from .user import User
 
 
@@ -11,7 +11,7 @@ class Client(Model):
     company_name = CharField(max_length=255)
     created_at = DateTimeField()
     last_contact = DateTimeField()
-    epic_events_contact = ForeignKeyField(User, backref="clients", null=True)
+    epic_events_contact = ForeignKeyField(User, backref="clients")
 
     class Meta:
         database = db

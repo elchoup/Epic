@@ -1,5 +1,5 @@
 from peewee import *
-from . import db
+from crm.config import db
 
 
 class Role(Model):

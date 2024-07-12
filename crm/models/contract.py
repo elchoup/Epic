@@ -1,6 +1,7 @@
 from peewee import *
-from . import db
+from crm.config import db
 from .client import Client
+from crm.models.user import User
 
 
 class Contract(Model):
@@ -10,6 +11,7 @@ class Contract(Model):
     remaining_amount = DecimalField()
     created_at = DateTimeField()
     status = BooleanField(default=False)
+    commercial_contact = ForeignKeyField(User, backref="contracts")
 
     class Meta:
         database = db

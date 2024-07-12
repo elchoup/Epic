@@ -3,11 +3,13 @@ from typing_extensions import Annotated
 from crm.models.client import Client
 from datetime import datetime
 from peewee import fn
+from crm.auth import auth_required, check_user_and_permissions
 
 app = typer.Typer()
 
 
 @app.command()
+@auth_required
 def create_client(
     first_name: Annotated[
         str, typer.Option("-f", prompt=True, help="First_name of the client")
@@ -22,8 +24,12 @@ def create_client(
     ],
     created_at: datetime = datetime.now(),
     last_contact: datetime = datetime.now(),
+    user=None,
 ):
     try:
+        if not check_user_and_permissions(user, "create-client"):
+            return
+
         Client.create(
             first_name=first_name,
             last_name=last_name,
@@ -32,6 +38,7 @@ def create_client(
             company_name=company_name,
             created_at=created_at,
             last_contact=last_contact,
+            epic_events_contact=user,
         )
         typer.echo("Client crée avec succés")
 
@@ -40,6 +47,7 @@ def create_client(
 
 
 @app.command()
+@auth_required
 def delete_client(
     first_name: Annotated[
         str, typer.Option("-f", prompt=True, help="First_name of the client")
@@ -48,15 +56,21 @@ def delete_client(
         str, typer.Option("-l", prompt=True, help="Last_name of the client")
     ],
     force: Annotated[
-        bool, typer.Option(prompt="Are you sure you want to delete ALL users?")
+        bool, typer.Option(prompt="Are you sure you want to delete this user?")
     ],
+    user=None,
 ):
     if force:
         try:
+            if not check_user_and_permissions(user, "delete-user"):
+                return
             client = Client.get(
                 fn.LOWER(Client.first_name) == first_name.lower(),
                 fn.LOWER(Client.last_name) == last_name.lower(),
             )
+            if not user.has_permission_own(client.epic_events_contact):
+                typer.echo("Unhautorized !! You are not the contact for this client")
+                return
             client.delete_instance()
             typer.echo(f"{client.last_name} deleted succesfully")
         except Client.DoesNotExist:
@@ -66,6 +80,7 @@ def delete_client(
 
 
 @app.command(name="list-clients")
+@auth_required
 def list_clients():
     try:
         clients = Client.select()
@@ -83,6 +98,7 @@ def list_clients():
 
 
 @app.command()
+@auth_required
 def get_client(
     client_id: int = typer.Option(
         ...,
