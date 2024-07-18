@@ -1,6 +1,5 @@
 import pytest
 from peewee import IntegrityError
-from test_config import setup_db, contract1, user1
 from crm.models.event import Event
 
 

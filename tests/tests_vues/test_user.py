@@ -1,7 +1,6 @@
 import pytest
 import bcrypt
 from typer.testing import CliRunner
-from test_config import setup_db, user2, user3
 from crm.models.user import User
 from crm.models.role import Role
 from crm.__main__ import app
@@ -9,8 +8,9 @@ from crm.__main__ import app
 runner = CliRunner()
 
 
-def test_create_user_succes(setup_db):
+def test_create_user_succes(setup_db, auth_admin_user):
     with setup_db.atomic():
+        user, token = auth_admin_user
         result = runner.invoke(
             app,
             [
@@ -22,24 +22,23 @@ def test_create_user_succes(setup_db):
                 "alain@gmail.com",
                 "-p",
                 "alaindu95",
-                "--role-name",
-                "commercial",
             ],
+            input="Commercial",
+            headers={"Authorization": f"Bearer {token}"},
         )
 
         print(result.output)
-
-        assert result.exit_code == 0
         assert "User created successfully" in result.output
 
         user = User.get(email="alain@gmail.com")
         assert user.name == "Alain"
         assert bcrypt.checkpw("alaindu95".encode(), user.password.encode())
-        assert user.role.name == "commercial"
+        assert user.role.name == "Commercial"
 
 
-def test_create_with_wrong_role(setup_db):
+def test_create_with_wrong_role(setup_db, auth_admin_user):
     with setup_db.atomic():
+        user, token = auth_admin_user
         result = runner.invoke(
             app,
             [
@@ -52,47 +51,60 @@ def test_create_with_wrong_role(setup_db):
                 "-p",
                 "alaindu95",
             ],
-            input="g,ergoerjgeo",
+            input="Wrong role",
+            headers={"Authorization": f"Bearer {token}"},
         )
 
         print(result.output)
-        assert "Error role choosen is invalid" in result.output
+        assert "Error: This role does not exist" in result.output
 
 
-def test_login(setup_db, user2):
+def test_login(setup_db, user2, auth_admin_user):
     user2
     with setup_db.atomic():
+        user, token = auth_admin_user
         result = runner.invoke(
-            app, ["user", "login", "--name", "Jean", "--password", "jean"]
+            app,
+            ["user", "login", "--name", "Jean", "--password", "jean"],
+            headers={"Authorization": f"Bearer {token}"},
         )
 
         assert result.exit_code == 0
         assert "Welcome Jean" in result.output
 
 
-def test_login_wrong_password(setup_db, user2):
+def test_login_wrong_password(setup_db, user2, auth_admin_user):
     user2
     with setup_db.atomic():
+        user, token = auth_admin_user
         result = runner.invoke(
-            app, ["user", "login", "--name", "Jean", "--password", "lolipop"]
+            app,
+            ["user", "login", "--name", "Jean", "--password", "lolipop"],
+            headers={"Authorization": f"Bearer {token}"},
         )
 
-        assert "Wrong password" in result.output
+        assert "Wrong email or password" in result.output
 
 
-def test_wrong_login(setup_db):
+def test_wrong_login(setup_db, auth_admin_user):
     with setup_db.atomic():
+        user, token = auth_admin_user
         result = runner.invoke(
-            app, ["user", "login", "--name", "JUAN", "--password", "JUANITO"]
+            app,
+            ["user", "login", "--name", "JUAN", "--password", "JUANITO"],
+            headers={"Authorization": f"Bearer {token}"},
         )
 
-    assert "User not found" in result.output
+    assert "Wrong email or password" in result.output
 
 
-def test_list_users(user2, user3):
+def test_list_users(user2, user3, auth_admin_user):
+    user, token = auth_admin_user
     user2
     user3
-    result = runner.invoke(app, ["user", "list-users"])
+    result = runner.invoke(
+        app, ["user", "list-users"], headers={"Authorization": f"Bearer {token}"}
+    )
 
     print(result.output)
 
@@ -100,17 +112,25 @@ def test_list_users(user2, user3):
     assert "Email: carlos@gmail.com" in result.output
 
 
-def test_no_user(setup_db):
+def test_no_user(setup_db, auth_admin_user):
     with setup_db:
-        result = runner.invoke(app, ["user", "list-users"])
+        user, token = auth_admin_user
+        result = runner.invoke(
+            app, ["user", "list-users"], headers={"Authorization": f"Bearer {token}"}
+        )
 
         assert "No users found" in result.output
 
 
-def test_get_user(setup_db, user2):
+def test_get_user(setup_db, user2, auth_admin_user):
     user2
     with setup_db.atomic():
-        result = runner.invoke(app, ["user", "get-user", "--user-id", "1"])
+        user, token = auth_admin_user
+        result = runner.invoke(
+            app,
+            ["user", "get-user", "--user-id", "1"],
+            headers={"Authorization": f"Bearer {token}"},
+        )
 
         print(result.output)
         assert (
@@ -119,8 +139,13 @@ def test_get_user(setup_db, user2):
         )
 
 
-def test_get_user_no_exist(setup_db):
+def test_get_user_no_exist(setup_db, auth_admin_user):
     with setup_db:
-        result = runner.invoke(app, ["user", "get-user", "--user-id", "1"])
+        user, token = auth_admin_user
+        result = runner.invoke(
+            app,
+            ["user", "get-user", "--user-id", "1"],
+            headers={"Authorization": f"Bearer {token}"},
+        )
 
         assert "User not found" in result.output

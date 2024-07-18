@@ -1,6 +1,6 @@
 import typer
 import bcrypt
-from typing_extensions import Annotated
+from typing_extensions import Annotated, Optional
 from crm.models.user import User
 from crm.models.role import Role
 from crm.auth import auth_required, check_user_and_permissions
@@ -10,13 +10,27 @@ app = typer.Typer()
 ROLES = ["commercial", "support", "gestion"]
 
 
-def prompt_for_role():
-    role_name = typer.prompt("Choisissez un rôle parmi Commercial, Support ou Gestion")
+def prompt_for_role(user):
+    """Function to choose a role when you create a user.
+    **Args = cureent user
+    If user is Admin he can assign another admin"""
+
+    role_name = typer.prompt("Choose a role from Commercial, Gestion or Support")
+    if role_name == "Admin":
+        if user.role.id == 4:
+            valid = typer.confirm("Are you sure to name another admin for this app ?")
+            if not valid:
+                typer.echo("Operation aborted")
+                return None
+        else:
+            typer.echo("You do not have the permissions to allow this role")
+            return None
     try:
         role = Role.get(name=role_name)
         return role
     except Role.DoesNotExist:
-        typer.echo("This role does not exist")
+        typer.echo("Error: This role does not exist")
+        return None
 
 
 @app.command()
@@ -27,12 +41,11 @@ def create_user(
     password: Annotated[
         str, typer.Option("-p", prompt=True, help="Password of the user")
     ],
-    role: str = typer.Option(prompt_for_role),
     user=None,
 ):
-    if not role:
-        typer.echo("You need to choose a role")
-        raise typer.Exit(code=1)
+    role = prompt_for_role(user)
+    if role is None:
+        return
     try:
         if not check_user_and_permissions(user, "create-user"):
             return
@@ -64,10 +77,19 @@ def login(
 
 @app.command(name="list-users")
 @auth_required
-def list_users():
+def list_users(
+    role: Annotated[Optional[str], typer.Option("-r", help="name of the role")] = None,
+    user=None,
+):
     try:
+        valid_roles = {"Admin", "Commercial", "Gestion", "Support"}
         users = User.select()
-        if not users:
+        if role is not None:
+            if role not in valid_roles:
+                typer.echo("Invalid role value")
+                return
+            users = User.select().join(Role).where(Role.name == role)
+        if users.count() == 0:
             typer.echo("No users found")
         for user in users:
             typer.echo(
@@ -83,7 +105,8 @@ def list_users():
 def get_user(
     user_id: int = typer.Option(
         ..., prompt="Enter id of user you want details of", help="ID of the user"
-    )
+    ),
+    user=None,
 ):
     try:
         user = User.get(id=user_id)
@@ -163,17 +186,3 @@ def update_user(
 
 if __name__ == "__main__":
     app()
-
-
-"""def create_user(
-    name: str = None, email: str = None, password: str = None, role: str = None
-):
-    if name is None:
-        name = typer.prompt("Nom")
-    if email is None:
-        email = typer.prompt("Email")
-    if password is None:
-        password = typer.prompt("Password")
-    if role is None:
-        role = typer.prompt("role (Commercial, Support ou Gestion)")
-"""

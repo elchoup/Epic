@@ -1,7 +1,6 @@
 import pytest
 from peewee import IntegrityError
 from crm.models.role import Role
-from tests.test_config import setup_db
 
 
 def test_create_role(setup_db):

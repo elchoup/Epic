@@ -1,5 +1,6 @@
 import typer
-from typing_extensions import Annotated
+
+from typing_extensions import Annotated, Optional
 from crm.models.contract import Contract
 from crm.models.client import Client
 from datetime import datetime
@@ -10,6 +11,7 @@ app = typer.Typer()
 
 
 def find_client():
+    """Function to get the client by id with a prompt"""
     client_id = typer.prompt("Enter the id of the client")
     try:
         client = Client.get(id=client_id)
@@ -20,10 +22,38 @@ def find_client():
 
 
 def sign(contract):
+    """Function to change true or false by yes or no"""
     if contract.status == True:
         return "Yes"
     else:
         return "No"
+
+
+def get_list(status, remain):
+    """Function to filter or not the list of contracts by status or remaining amount"""
+    contracts = Contract.select()
+    if status is not None:
+        if status.lower() == "signed":
+            contracts = contracts.where(Contract.status == True)
+            return contracts
+        elif status.lower() == "not signed":
+            contracts = contracts.where(Contract.status == False)
+            return contracts
+        else:
+            typer.echo("Invalid status value")
+            return
+
+    if remain is not None:
+        if remain.lower() == "rest to pay":
+            contracts = contracts.where(Contract.remaining_amount > 0)
+            return contracts
+        if remain == "paid":
+            contracts = contracts.where(Contract.remaining_amount == 0)
+            return contracts
+        else:
+            typer.echo("Invalid remain value")
+            return
+    return contracts
 
 
 @app.command()
@@ -84,12 +114,22 @@ def delete_contract(
 
 @app.command(name="list-contracts")
 @auth_required
-def list_contracts(user=None):
+def list_contracts(
+    status: Annotated[
+        Optional[str],
+        typer.Option("-s", help="Status of the contract (signed or not signed)"),
+    ] = None,
+    remain: Annotated[
+        Optional[str],
+        typer.Option("-r", help="Remaining amount(rest to pay or paid)"),
+    ] = None,
+    user=None,
+):
     try:
-        if not check_user_and_permissions(user, "list-contract"):
+        contracts = get_list(status, remain)
+        if contracts is None:
             return
-        contracts = Contract.select()
-        if not contracts:
+        if contracts.count() == 0:
             typer.echo("No elements found")
             return
         for contract in contracts:

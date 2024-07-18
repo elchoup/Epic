@@ -1,5 +1,5 @@
 import typer
-from typing_extensions import Annotated
+from typing_extensions import Annotated, Optional
 from crm.models.contract import Contract
 from crm.models.event import Event
 from crm.models.user import User
@@ -10,6 +10,7 @@ app = typer.Typer()
 
 
 def find_contract():
+    """function to find a contract by id from a prompt"""
     contract_id = typer.prompt("Enter the id of the contract")
     try:
         contract = Contract.get(id=contract_id)
@@ -20,8 +21,11 @@ def find_contract():
 
 
 def find_user():
-    user_id = typer.prompt("Enter the id of the support user")
+    """Function to fin a user by id from a prompt"""
+    user_id = typer.prompt("Enter the id of the support user or pass", default="")
     try:
+        if user_id == "":
+            return
         user = User.get(id=user_id)
         if not user.role.name == "Support":
             typer.echo("Only a support user can be assigned")
@@ -33,6 +37,7 @@ def find_user():
 
 
 def prompt_date(prompt_text):
+    """Function to get the date by prompt"""
     while True:
         date_str = typer.prompt(prompt_text)
         try:
@@ -105,11 +110,31 @@ def delete_event(
 
 @app.command(name="list-events")
 @auth_required
-def list_events(user=None):
+def list_events(
+    support_contact: Annotated[
+        Optional[str], typer.Option("-s", help="name of the support contact")
+    ] = None,
+    own_events: Annotated[
+        Optional[str],
+        typer.Option("-o", help="filter your events: own or not yours : not own"),
+    ] = None,
+    user=None,
+):
     try:
-        if not check_user_and_permissions(user, "list-event"):
-            return
         events = Event.select()
+        if support_contact is not None:
+            events = events.join(User).where(User.name == support_contact)
+        if own_events is not None:
+            if own_events.lower() == "own":
+                events = events.where(Event.support_contact == user)
+            if own_events.lower() == "not own":
+                events = events.where(Event.support_contact != user)
+            else:
+                typer.echo("Invalid own_events value")
+                return
+        if events is None:
+            typer.echo("No events found")
+            return
         if not events:
             typer.echo("No events in the database")
             return
@@ -117,7 +142,7 @@ def list_events(user=None):
             typer.echo(
                 f"Events n°{event.id}: Name: {event.name}, Contract n°: {event.contract.id}, "
                 f"Location: {event.location}, Attendees: {event.attendees}, "
-                f"Notes: {event.notes}, Start date: {event.start_date}, End date: {event.end_date}"
+                f"Notes: {event.notes}, Start date: {event.start_date}, End date: {event.end_date}, Support contact: {event.support_contact.name}"
             )
     except Exception as e:
         typer.echo(f"Error: {e}")
