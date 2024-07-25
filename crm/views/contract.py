@@ -10,13 +10,12 @@ from crm.auth import auth_required, check_user_and_permissions
 app = typer.Typer()
 
 
-def find_client():
+def find_client(client_id):
     """Function to get the client by id with a prompt"""
-    client_id = typer.prompt("Enter the id of the client")
     try:
         client = Client.get(id=client_id)
     except Client.DoesNotExist:
-        typer.echo("Client non trouvé")
+        typer.echo("Client not found")
         return
     return client
 
@@ -31,34 +30,39 @@ def sign(contract):
 
 def get_list(status, remain):
     """Function to filter or not the list of contracts by status or remaining amount"""
-    contracts = Contract.select()
-    if status is not None:
-        if status.lower() == "signed":
-            contracts = contracts.where(Contract.status == True)
-            return contracts
-        elif status.lower() == "not signed":
-            contracts = contracts.where(Contract.status == False)
-            return contracts
-        else:
-            typer.echo("Invalid status value")
-            return
+    try:
+        contracts = Contract.select()
+        if status is not None:
+            if status.lower() == "signed":
+                contracts = contracts.where(Contract.status == True)
 
-    if remain is not None:
-        if remain.lower() == "rest to pay":
-            contracts = contracts.where(Contract.remaining_amount > 0)
-            return contracts
-        if remain == "paid":
-            contracts = contracts.where(Contract.remaining_amount == 0)
-            return contracts
-        else:
-            typer.echo("Invalid remain value")
-            return
-    return contracts
+            elif status.lower() == "not signed":
+                contracts = contracts.where(Contract.status == False)
+
+            else:
+                typer.echo("Invalid status value")
+                return
+
+        if remain is not None:
+            if remain.lower() == "rest to pay":
+                contracts = contracts.where(Contract.remaining_amount > 0)
+
+            elif remain == "paid":
+                contracts = contracts.where(Contract.remaining_amount == 0)
+
+            else:
+                typer.echo("Invalid remain value")
+                return
+        return contracts
+    except Contract.DoesNotExist:
+        typer.echo("Contract not found")
+        return
 
 
 @app.command()
 @auth_required
 def create_contract(
+    client_id: int = typer.Option(..., "-i", prompt=True, help="Id of the client"),
     total_amount: int = typer.Option(
         ..., "-t", prompt=True, help="Total amount of the contract"
     ),
@@ -66,15 +70,23 @@ def create_contract(
         ..., "-r", prompt=True, help="Remaining amount to be paid"
     ),
     status: bool = typer.Option(
-        ..., "--sign", prompt=True, help="Indicate if the contract is signed or not"
+        False,
+        "--sign",
+        prompt=True,
+        help="Indicate if the contract is signed or not",
+        is_flag=True,
     ),
     created_at: datetime = datetime.now(),
     user=None,
 ):
+    """Function to create a contract: python -m crm contract create-contract or
+    python -m crm contract create-contract -i "client id" -t "total amount" -r "remaining amount" --sign "if signed.
+    AUTH REQUIRED LOGIN FIRST
+    """
     try:
         if not check_user_and_permissions(user, "create-contract"):
             return
-        client = find_client()
+        client = find_client(client_id)
 
         commercial_contact = client.epic_events_contact
         contract = Contract.create(
@@ -97,6 +109,10 @@ def delete_contract(
     contract_id: int = typer.Option(..., "-i", prompt=True, help="id of the contract"),
     user=None,
 ):
+    """Function to delete a contract by id:
+    python -m crm contract delete-contract or python -m crm contract delete-contract -i "contract id".
+    AUTH REQUIRED LOGIN FIRST
+    """
     try:
         contract = Contract.get(id=contract_id)
         if not check_user_and_permissions(
@@ -125,6 +141,10 @@ def list_contracts(
     ] = None,
     user=None,
 ):
+    """Function to get the list of all contracts: python -m crm contract list-contracts or
+    contract by status or remaining amount: python -m crm contract list-contracts -s "signed or not signed" -r "rest to pay or paid".
+    AUTH REQUIRED LOGIN FIRST
+    """
     try:
         contracts = get_list(status, remain)
         if contracts is None:
@@ -154,6 +174,9 @@ def get_contract(
     ),
     user=None,
 ):
+    """Function to get contract by id: python -m crm contract get-contract or
+    python -m crm contract get-contract -i "contract id".
+    AUTH REQUIRED LOGIN FIRST"""
     try:
         if not check_user_and_permissions(user, "get-contract"):
             return
@@ -174,10 +197,12 @@ def get_contract(
 @auth_required
 def update_contract(
     contract_id: Annotated[
-        int, typer.Option(..., prompt=True, help="ID of the contract")
+        int, typer.Option(..., "-i", prompt=True, help="ID of the contract")
     ],
     user=None,
 ):
+    """Function to update a contract by prompt: python -m crm contract update-contract or
+    python -m crm contract update-contract -i "contract id" AUTH REQUIRED LOGIN FIRST"""
     try:
         contract = Contract.get(id=contract_id)
         if not check_user_and_permissions(
@@ -237,7 +262,7 @@ def update_contract(
         typer.echo(
             f"New contract details: "
             f"Contract n°{contract.id}, Client: {contract.client.first_name} {contract.client.last_name},"
-            f"Total amount: {contract.total_amount}, Remanining_amount: {contract.remaining_amount},"
+            f"Total amount: {contract.total_amount}, Remaining amount: {contract.remaining_amount},"
             f"Sign: {status}, Created at: {contract.created_at}"
         )
     except Contract.DoesNotExist:
@@ -246,26 +271,69 @@ def update_contract(
         typer.echo(f"error: {e}")
 
 
-"""@app.command()
-def update_test_contract(
+@app.command()
+@auth_required
+def update_contract_direct(
     contract_id: Annotated[
-        int, typer.Option(..., prompt=True, help="ID of the contract")
+        int, typer.Option(..., "-i", prompt=True, help="contract id")
     ],
+    client_id: Annotated[Optional[int], typer.Option("-c", help="client id")] = None,
     total_amount: Annotated[
-        int, typer.Option(
-        ..., "-t", prompt=True, help="Total amount of the contract"
-    )],
-    remaining_amount: int = typer.Option(
-        ..., "-r", prompt=True, help="Remaining amount to be paid"
-    ),
-    status: bool = typer.Option(
-        ..., "--sign", prompt=True, help="Indicate if the contract is signed or not"
-    ),
-    created_at: datetime = datetime.now(),
+        Optional[int], typer.Option("-t", help="total amount of the contract")
+    ] = None,
+    remaining_amount: Annotated[
+        Optional[int], typer.Option("-r", help="remaining amount of the contract")
+    ] = None,
+    new_status: Annotated[
+        Optional[str], typer.Option("-s", help="sign or not sign")
+    ] = None,
+    user=None,
 ):
+    """Function to update a contract by command:
+    python -m crm contract update-contract -i "contract id" -c "client id" -t "total amount" -r "remaining amount" -s "sign or not sign".
+    AUTH REQUIRED LOGIN FIRST"""
     try:
         contract = Contract.get(id=contract_id)
-        status = sign(contract)"""
+        if not check_user_and_permissions(
+            user, "update-contract"
+        ) and not user.has_permission_own(contract.commercial_contact):
+            return
+
+        if client_id is not None:
+            try:
+                client = Client.get(id=client_id)
+                contract.client = client
+            except Client.DoesNotExist:
+                typer.echo("Client not found")
+                return
+
+        if total_amount is not None:
+            contract.total_amount = total_amount
+
+        if remaining_amount is not None:
+            contract.remaining_amount = remaining_amount
+
+        if new_status is not None:
+            if new_status.lower() == "signed":
+                contract.status = True
+            elif new_status.lower() == "not signed":
+                contract.status = False
+            else:
+                typer.echo("Value of status not available status not changed")
+
+        contract.save()
+        status = sign(contract)
+        typer.echo("Contract updated succesfully")
+        typer.echo(
+            f"New contract details: "
+            f"Contract n°{contract.id}, Client: {contract.client.first_name} {contract.client.last_name},"
+            f"Total amount: {contract.total_amount}, Remanining amount: {contract.remaining_amount},"
+            f"Sign: {status}, Created at: {contract.created_at}"
+        )
+    except Contract.DoesNotExist:
+        typer.echo("Contract not found")
+    except Exception as e:
+        typer.echo(f"error: {e}")
 
 
 if __name__ == "__main__":

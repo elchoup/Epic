@@ -18,7 +18,7 @@ def test_create_contract(setup_db, client1, user2):
         assert contract.total_amount == 15000
         assert contract.remaining_amount == 5000
         assert contract.created_at == "2024-06-24 17:00:00"
-        assert contract.commercial_contact.name == "Com"
+        assert contract.commercial_contact.name == "Nath"
 
 
 def test_create_contract_invalid_data(client1):

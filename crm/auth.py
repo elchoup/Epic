@@ -8,7 +8,7 @@ from crm.config import SECRET_KEY
 def generate_token(user_id):
     payload = {
         "user_id": user_id,
-        "exp": datetime.now(timezone.utc) + timedelta(hours=1),
+        "exp": datetime.now(timezone.utc) + timedelta(hours=3),
     }
     token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
     print(token)
@@ -36,7 +36,6 @@ def get_authenticated_user():
             from crm.models.user import User
 
             user = User.get_by_id(user_id)
-            print(f"{user.name}, {user.role.name}")
             return user
 
     except Exception as e:

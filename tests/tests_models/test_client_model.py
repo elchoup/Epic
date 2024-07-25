@@ -21,7 +21,7 @@ def test_create_client(setup_db, user2):
         assert client.email == "top-gun@gmail.com"
         assert client.phone == "0011223344"
         assert client.company_name == "Top Gun company"
-        assert client.epic_events_contact.name == "Com"
+        assert client.epic_events_contact.name == "Nath"
 
 
 def test_duplicate_email_client(setup_db, user2):

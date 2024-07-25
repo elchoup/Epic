@@ -1,13 +1,17 @@
 import pytest
 from peewee import IntegrityError
 from crm.models.event import Event
+from crm.models.contract import Contract
 
 
-def test_create_event(setup_db, contract1, user1):
+contract = Contract.get(id=4)
+
+
+def test_create_event(setup_db, user1):
     with setup_db.atomic():
         event = Event.create(
             name="JO",
-            contract=contract1,
+            contract=contract,
             start_date="2024-07-26",
             end_date="2024-08-11",
             support_contact=user1,
@@ -26,11 +30,10 @@ def test_create_event(setup_db, contract1, user1):
         assert event.notes == "Be careful"
 
 
-def test_create_event_invalid_data(contract1, user1):
+def test_create_event_invalid_data(user1):
     with pytest.raises(IntegrityError):
         Event.create(
-            name="JO",
-            contract=contract1,
+            contract=contract,
             start_date="2024-07-26",
             end_date="2024-08-11",
             support_contact=user1,
