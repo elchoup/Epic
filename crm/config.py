@@ -10,7 +10,4 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 if SECRET_KEY is None:
     raise ValueError("No SECRET_KEY set for this application")
 
-print(SECRET_KEY)
-
-
 db = SqliteDatabase("db.sqlite3")
