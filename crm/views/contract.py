@@ -1,5 +1,5 @@
 import typer
-
+import sentry_sdk
 from typing_extensions import Annotated, Optional
 from crm.models.contract import Contract
 from crm.models.client import Client
@@ -26,6 +26,11 @@ def sign(contract):
         return "Yes"
     else:
         return "No"
+
+
+def sign_fo_sdk(contract):
+    if contract.status == True:
+        sentry_sdk.capture_message(f"Contract sign: {contract.id}")
 
 
 def get_list(status, remain):
@@ -99,6 +104,7 @@ def create_contract(
         )
         typer.echo("Contract created successfully")
         typer.echo(f"Contract ID: {contract.id}")
+        sign_fo_sdk(contract)
     except Exception as e:
         typer.echo(f"Error: {e}")
 
@@ -253,6 +259,7 @@ def update_contract(
                 "Press 'y' for signed or 'n' for not signed", default=contract.status
             )
             contract.status = status
+            sign_fo_sdk(contract)
 
         contract.total_amount = total_amount
         contract.remaining_amount = remaining_amount
@@ -316,6 +323,7 @@ def update_contract_direct(
         if new_status is not None:
             if new_status.lower() == "signed":
                 contract.status = True
+                sentry_sdk.capture_message(f"Contract signed: {contract.id}")
             elif new_status.lower() == "not signed":
                 contract.status = False
             else:

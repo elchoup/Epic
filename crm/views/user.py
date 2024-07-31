@@ -1,9 +1,11 @@
 import typer
+import sentry_sdk
 import bcrypt
 from typing_extensions import Annotated, Optional
 from crm.models.user import User
 from crm.models.role import Role
 from crm.auth import auth_required, check_user_and_permissions
+import os
 
 
 app = typer.Typer()
@@ -54,9 +56,16 @@ def create_user(
         if not check_user_and_permissions(user, "create-user"):
             return
         hashed_password = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
-        User.create(name=name, email=email, password=hashed_password, role=role)
+        user_create = User.create(
+            name=name, email=email, password=hashed_password, role=role
+        )
         typer.echo("User created successfully")
+        sentry_sdk.capture_message(
+            f"User created: {user_create.id} - {user_create.name}"
+        )
+        return user_create
     except Exception as e:
+        sentry_sdk.capture_exception(e)
         return typer.echo(f"Error : {e}")
 
 
@@ -80,6 +89,19 @@ def login(
     except User.DoesNotExist:
         typer.echo("Wrong email or password")
         return
+    except Exception as e:
+        typer.echo(f"Error {e}")
+
+
+@app.command()
+def logout():
+    """Function to logout: python -m crm user logout"""
+    try:
+        # Attempt to remove the token file
+        os.remove("token.txt")
+        typer.echo("Successfully logged out")
+    except FileNotFoundError:
+        typer.echo("You are not logged in")
     except Exception as e:
         typer.echo(f"Error {e}")
 
@@ -196,11 +218,15 @@ def update_user(
         user_to_up.password = password
 
         user_to_up.save()
+        typer.echo("User updated succesfully")
+        sentry_sdk.capture_message(f"User updated: {user_to_up.id} - {user_to_up.name}")
 
     except User.DoesNotExist:
         typer.echo("Not found")
+        sentry_sdk.capture_message(f"Attempted to update non-existent user: {user_id}")
 
     except Exception as e:
+        sentry_sdk.capture_exception(e)
         typer.echo(f"Error: {e}")
 
 
@@ -240,13 +266,16 @@ def update_user_direct(
             new_password = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
             user_to_up.password = new_password
 
-        typer.echo("User updated succesfully")
         user_to_up.save()
+        typer.echo("User updated succesfully")
+        sentry_sdk.capture_message(f"User updated: {user_to_up.id} - {user_to_up.name}")
 
     except User.DoesNotExist:
         typer.echo("User not found")
+        sentry_sdk.capture_message(f"Attempted to update non-existent user: {user_id}")
 
     except Exception as e:
+        sentry_sdk.capture_exception(e)
         typer.echo(f"Error: {e}")
 
 

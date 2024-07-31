@@ -2,6 +2,7 @@ import sys
 import os
 import pytest
 import bcrypt
+from unittest.mock import patch
 from peewee import SqliteDatabase
 from typer.testing import CliRunner
 from crm.models.user import User
@@ -135,9 +136,9 @@ def setup_db():
         )
 
         contract4 = Contract.get_or_create(
-            client=client3,
-            total_amount=5000,
-            remaining_amount=2500,
+            client=client2,
+            total_amount=15000,
+            remaining_amount=1500,
             commercial_contact=client3.epic_events_contact,
             status=True,
         )
@@ -245,30 +246,9 @@ def setup_db():
 
 @pytest.fixture
 def admin_logged():
-    runner.invoke(
-        app, ["user", "login", "--email", "admin@gmail.com", "--password", "admin"]
-    )
-
-
-@pytest.fixture
-def com_logged():
-    runner.invoke(
-        app, ["user", "login", "--email", "com@gmail.com", "--password", "com"]
-    )
-
-
-@pytest.fixture
-def gest_logged():
-    runner.invoke(
-        app, ["user", "login", "--email", "gest@gmail.com", "--password", "gest"]
-    )
-
-
-@pytest.fixture
-def sup_logged():
-    runner.invoke(
-        app, ["user", "login", "--email", "sup@gmail.com", "--password", "sup"]
-    )
+    user = User.get(id=4)
+    with patch("crm.auth.get_authenticated_user", return_value=user):
+        yield user
 
 
 @pytest.fixture

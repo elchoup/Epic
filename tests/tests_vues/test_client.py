@@ -22,8 +22,9 @@ def test_check_date_wrong():
     assert result == None
 
 
-def test_create_client_valid(setup_db):
+def test_create_client_valid(setup_db, admin_logged):
     with setup_db.atomic():
+        admin_logged
         result = runner.invoke(
             app,
             [
@@ -46,8 +47,9 @@ def test_create_client_valid(setup_db):
         assert "Client created succesfully" in result.output
 
 
-def test_create_client_wrong_value(setup_db):
+def test_create_client_wrong_value(setup_db, admin_logged):
     with setup_db.atomic():
+        admin_logged
         result = runner.invoke(
             app,
             [
@@ -70,41 +72,47 @@ def test_create_client_wrong_value(setup_db):
         assert "Error" in result.output
 
 
-def test_delete_client_valid(setup_db):
+def test_delete_client_valid(setup_db, admin_logged):
     with setup_db.atomic():
+        admin_logged
         result = runner.invoke(app, ["client", "delete-client", "-i", 1])
         assert "first deleted succesfully" in result.output
 
 
-def test_delete_client_no_exist(setup_db):
+def test_delete_client_no_exist(setup_db, admin_logged):
     with setup_db.atomic():
+        admin_logged
         result = runner.invoke(app, ["client", "delete-client", "-i", 45])
         assert "Client not found" in result.output
 
 
-def test_list_clients(setup_db):
+def test_list_clients(setup_db, admin_logged):
     with setup_db.atomic():
+        admin_logged
         result = runner.invoke(app, ["client", "list-clients"])
         assert "Client n°1: Name: client1" in result.output
         assert "Company name: client3&co" in result.output
 
 
-def test_get_client_valid(setup_db):
+def test_get_client_valid(setup_db, admin_logged):
     with setup_db.atomic():
+        admin_logged
         result = runner.invoke(app, ["client", "get-client", "-i", 1])
         assert (
             "Client n°1: Name: client1 first, Email: client1@gmail.com" in result.output
         )
 
 
-def test_get_client_invalid(setup_db):
+def test_get_client_invalid(setup_db, admin_logged):
     with setup_db.atomic():
+        admin_logged
         result = runner.invoke(app, ["client", "get-client", "-i", 10145])
         assert "Client not found" in result.output
 
 
-def test_update_client_direct_valid(setup_db):
+def test_update_client_direct_valid(setup_db, admin_logged):
     with setup_db.atomic():
+        admin_logged
         result = runner.invoke(
             app,
             [
@@ -125,8 +133,9 @@ def test_update_client_direct_valid(setup_db):
         assert "Email: CLIENT1@gmail.com" in result.output
 
 
-def test_update_client_direct_no_exist(setup_db):
+def test_update_client_direct_no_exist(setup_db, admin_logged):
     with setup_db.atomic():
+        admin_logged
         result = runner.invoke(
             app,
             [
@@ -145,8 +154,9 @@ def test_update_client_direct_no_exist(setup_db):
         assert "Client not found" in result.output
 
 
-def test_update_client_valid(setup_db):
+def test_update_client_valid(setup_db, admin_logged):
     with setup_db.atomic():
+        admin_logged
         result = runner.invoke(
             app,
             ["client", "update-client", "-i", 1],

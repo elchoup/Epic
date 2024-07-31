@@ -25,8 +25,9 @@ def test_find_contract_invalid(setup_db):
     mock_echo.assert_called_once_with("Contract not found")
 
 
-def test_create_event_valid(setup_db):
+def test_create_event_valid(setup_db, admin_logged):
     with setup_db.atomic():
+        admin_logged
         result = runner.invoke(
             app,
             [
@@ -48,8 +49,9 @@ def test_create_event_valid(setup_db):
         assert "Event id: 4" in result.output
 
 
-def test_create_event_not_signed(setup_db):
+def test_create_event_not_signed(setup_db, admin_logged):
     with setup_db.atomic():
+        admin_logged
         result = runner.invoke(
             app,
             [
@@ -70,8 +72,9 @@ def test_create_event_not_signed(setup_db):
         assert "Contract must be sign to create an event" in result.output
 
 
-def test_create_event_not_unique(setup_db):
+def test_create_event_not_unique(setup_db, admin_logged):
     with setup_db.atomic():
+        admin_logged
         result = runner.invoke(
             app,
             [
@@ -92,22 +95,25 @@ def test_create_event_not_unique(setup_db):
         assert "An event already exist for this contract." in result.output
 
 
-def test_delete_event_valid(setup_db):
+def test_delete_event_valid(setup_db, admin_logged):
     with setup_db.atomic():
+        admin_logged
         result = runner.invoke(app, ["event", "delete-event", "-i", 1])
 
         assert "Event with id : 1 deleted succesfully" in result.output
 
 
-def test_delete_event_invalid(setup_db):
+def test_delete_event_invalid(setup_db, admin_logged):
     with setup_db.atomic():
+        admin_logged
         result = runner.invoke(app, ["event", "delete-event", "-i", 458799885])
 
         assert "Event not found" in result.output
 
 
-def test_list_events_valid(setup_db):
+def test_list_events_valid(setup_db, admin_logged):
     with setup_db.atomic():
+        admin_logged
         result = runner.invoke(app, ["event", "list-events"])
 
         assert "event1" in result.output
@@ -115,8 +121,9 @@ def test_list_events_valid(setup_db):
         assert "event3" in result.output
 
 
-def test_list_events_filtered(setup_db):
+def test_list_events_filtered(setup_db, admin_logged):
     with setup_db.atomic():
+        admin_logged
         result = runner.invoke(app, ["event", "list-events", "-s", "Sup"])
 
         assert "event1" not in result.output
@@ -124,22 +131,25 @@ def test_list_events_filtered(setup_db):
         assert "event3" in result.output
 
 
-def test_get_event_valid(setup_db):
+def test_get_event_valid(setup_db, admin_logged):
     with setup_db.atomic():
+        admin_logged
         result = runner.invoke(app, ["event", "get-event", "-i", 1])
 
         assert "event1" in result.output
 
 
-def test_get_event_invalid(setup_db):
+def test_get_event_invalid(setup_db, admin_logged):
     with setup_db.atomic():
+        admin_logged
         result = runner.invoke(app, ["event", "get-event", "-i", "not int"])
 
         assert "Error" in result.output
 
 
-def test_update_event_direct_valid(setup_db):
+def test_update_event_direct_valid(setup_db, admin_logged):
     with setup_db.atomic():
+        admin_logged
         result = runner.invoke(
             app,
             [
@@ -157,8 +167,9 @@ def test_update_event_direct_valid(setup_db):
         assert "Notes for event2" in result.output
 
 
-def test_update_event_direct_invalid(setup_db):
+def test_update_event_direct_invalid(setup_db, admin_logged):
     with setup_db.atomic():
+        admin_logged
         result = runner.invoke(
             app,
             [
@@ -176,8 +187,9 @@ def test_update_event_direct_invalid(setup_db):
         assert "Error" in result.output
 
 
-def test_update_event_valid(setup_db):
+def test_update_event_valid(setup_db, admin_logged):
     with setup_db.atomic():
+        admin_logged
         result = runner.invoke(
             app,
             [

@@ -76,15 +76,9 @@ def test_prompt_for_role_no_exist(setup_db, user1):
         assert "Error: This role does not exist" in output
 
 
-"""def login():
-    runner.invoke(
-        app, ["user", "login", "--email", "admin@gmail.com", "--password", "admin"]
-    )"""
-
-
 def test_create_user_success(setup_db, admin_logged):
-    admin_logged
     with setup_db.atomic():
+        admin_logged
         result = runner.invoke(
             app,
             [
@@ -172,8 +166,9 @@ def test_get_user_no_exist(setup_db, admin_logged):
         assert "User not found" in result.output
 
 
-def test_update_user_direct_success(setup_db):
+def test_update_user_direct_success(setup_db, admin_logged):
     with setup_db.atomic():
+        admin_logged
         result = runner.invoke(
             app,
             [
@@ -193,8 +188,9 @@ def test_update_user_direct_success(setup_db):
         assert "User updated succesfully" in result.output
 
 
-def test_update_user_direct_no_user(setup_db):
+def test_update_user_direct_no_user(setup_db, admin_logged):
     with setup_db.atomic():
+        admin_logged
         result = runner.invoke(
             app,
             [
@@ -212,8 +208,9 @@ def test_update_user_direct_no_user(setup_db):
         assert "User not found" in result.output
 
 
-def test_update_user_valid(setup_db):
+def test_update_user_valid(setup_db, admin_logged):
     with setup_db.atomic():
+        admin_logged
         runner.invoke(
             app,
             [
@@ -230,8 +227,9 @@ def test_update_user_valid(setup_db):
     assert user.email == "COM1@GMAIL.COM"
 
 
-def test_update_user_invalid(setup_db):
+def test_update_user_invalid(setup_db, admin_logged):
     with setup_db.atomic():
+        admin_logged
         result = runner.invoke(
             app,
             [

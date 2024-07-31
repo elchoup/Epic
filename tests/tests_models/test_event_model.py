@@ -4,11 +4,9 @@ from crm.models.event import Event
 from crm.models.contract import Contract
 
 
-contract = Contract.get(id=4)
-
-
 def test_create_event(setup_db, user1):
     with setup_db.atomic():
+        contract = Contract.get(id=4)
         event = Event.create(
             name="JO",
             contract=contract,
@@ -32,6 +30,7 @@ def test_create_event(setup_db, user1):
 
 def test_create_event_invalid_data(user1):
     with pytest.raises(IntegrityError):
+        contract = Contract.get(id=4)
         Event.create(
             contract=contract,
             start_date="2024-07-26",

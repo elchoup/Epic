@@ -40,8 +40,9 @@ def test_sign_contract_true(setup_db):
         assert result == "Yes"
 
 
-def test_create_contract_valid(setup_db):
+def test_create_contract_valid(setup_db, admin_logged):
     with setup_db.atomic():
+        admin_logged
         result = runner.invoke(
             app,
             ["contract", "create-contract", "-i", 1, "-t", 4500, "-r", 500, "--sign"],
@@ -53,8 +54,9 @@ def test_create_contract_valid(setup_db):
         assert contract.status == True
 
 
-def test_create_contract_invalid(setup_db):
+def test_create_contract_invalid(setup_db, admin_logged):
     with setup_db.atomic():
+        admin_logged
         result = runner.invoke(
             app,
             [
@@ -73,47 +75,54 @@ def test_create_contract_invalid(setup_db):
         assert "Error" in result.output
 
 
-def test_delete_contract_valid(setup_db):
+def test_delete_contract_valid(setup_db, admin_logged):
     with setup_db.atomic():
+        admin_logged
         result = runner.invoke(app, ["contract", "delete-contract", "-i", 1])
 
         assert "contract with id: 1 deleted succesfuly" in result.output
 
 
-def test_delete_contract_invalid(setup_db):
+def test_delete_contract_invalid(setup_db, admin_logged):
     with setup_db.atomic():
+        admin_logged
         result = runner.invoke(app, ["contract", "delete-contract", "-i", 4528])
 
         assert "Contract not found" in result.output
 
 
-def test_list_contracts(setup_db):
+def test_list_contracts(setup_db, admin_logged):
     with setup_db.atomic():
+        admin_logged
         result = runner.invoke(app, ["contract", "list-contracts"])
         assert "Contract n°1, Client: client1 first" in result.output
         assert "Contract n°2, Client: client2 second" in result.output
 
 
-def test_list_contracts_filter(setup_db):
+def test_list_contracts_filter(setup_db, admin_logged):
     with setup_db.atomic():
+        admin_logged
         result = runner.invoke(app, ["contract", "list-contracts", "-s", "signed"])
         assert "not signed" not in result.output
 
 
-def test_get_contract_valid(setup_db):
+def test_get_contract_valid(setup_db, admin_logged):
     with setup_db.atomic():
+        admin_logged
         result = runner.invoke(app, ["contract", "get-contract", "-i", 1])
         assert "Contract n°1, Client: client1 first" in result.output
 
 
-def test_get_contract_invalid(setup_db):
+def test_get_contract_invalid(setup_db, admin_logged):
     with setup_db.atomic():
+        admin_logged
         result = runner.invoke(app, ["contract", "get-contract", "-i", 1000000])
         assert "Contract not found" in result.output
 
 
-def test_update_contract_direct_valid(setup_db):
+def test_update_contract_direct_valid(setup_db, admin_logged):
     with setup_db.atomic():
+        admin_logged
         result = runner.invoke(
             app,
             [
@@ -133,8 +142,9 @@ def test_update_contract_direct_valid(setup_db):
         assert "Total amount: 10000" in result.output
 
 
-def test_update_contract_direct_invalid(setup_db):
+def test_update_contract_direct_invalid(setup_db, admin_logged):
     with setup_db.atomic():
+        admin_logged
         result = runner.invoke(
             app,
             [
@@ -153,8 +163,9 @@ def test_update_contract_direct_invalid(setup_db):
         assert "Contract not found" in result.output
 
 
-def test_update_contract_valid(setup_db):
+def test_update_contract_valid(setup_db, admin_logged):
     with setup_db.atomic():
+        admin_logged
         result = runner.invoke(
             app, ["contract", "update-contract", "-i", 1], input=" \n10000\n0\ny\ny\n"
         )
@@ -169,8 +180,9 @@ def test_update_contract_valid(setup_db):
         assert "Remaining amount: 0" in result.output
 
 
-def test_update_contract_invalid(setup_db):
+def test_update_contract_invalid(setup_db, admin_logged):
     with setup_db.atomic():
+        admin_logged
         result = runner.invoke(
             app,
             ["contract", "update-contract", "-i", 45892],
