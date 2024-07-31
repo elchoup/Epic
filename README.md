@@ -25,6 +25,12 @@ Start your virtual env and install the requirements
 pip install -r requirements.txt
 ```
 
+Initialize the database 
+
+```bash
+python -m crm.create_table.py
+```
+
 
     
 ## Environment Variables
