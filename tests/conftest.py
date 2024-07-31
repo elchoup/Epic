@@ -252,6 +252,13 @@ def admin_logged():
 
 
 @pytest.fixture
+def com_logged():
+    user = User.get(id=1)
+    with patch("crm.auth.get_authenticated_user", return_value=user):
+        yield user
+
+
+@pytest.fixture
 def user1(setup_db):
     with setup_db.atomic():
         role = Role.get(name="Support")
@@ -289,19 +296,6 @@ def user3(setup_db):
         }
         user = User.create(**user_data)
         yield user
-
-
-"""@pytest.fixture
-def auth_admin_user(setup_db):
-    with setup_db.atomic():
-        role = Role.get(name="Admin")
-        password = bcrypt.hashpw("admin".encode(), bcrypt.gensalt()).decode()
-        user = User.get_or_create(
-            name="Admin", email="admin@gmail.com", password=password, role=role
-        )
-        token = generate_token(user.id)
-
-        yield user, token"""
 
 
 @pytest.fixture
