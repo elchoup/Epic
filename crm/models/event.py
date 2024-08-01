@@ -1,4 +1,12 @@
-from peewee import *
+from peewee import (
+    Model,
+    AutoField,
+    CharField,
+    ForeignKeyField,
+    DateTimeField,
+    TextField,
+    IntegerField,
+)
 from .contract import Contract
 from .user import User
 from crm.config import db

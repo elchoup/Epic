@@ -51,7 +51,7 @@ def test_create_contract_valid(setup_db, admin_logged):
         assert "Contract created successfully" in result.output
         assert "Contract ID: 4"
         contract = Contract.get(id=4)
-        assert contract.status == True
+        assert contract.status is True
 
 
 def test_create_contract_invalid(setup_db, admin_logged):
@@ -173,7 +173,7 @@ def test_update_contract_valid(setup_db, admin_logged):
         contract = Contract.get(id=1)
         assert contract.total_amount == 10000
         assert contract.remaining_amount == 0
-        assert contract.status == True
+        assert contract.status is True
 
         assert "Contract n°1" in result.output
         assert "Total amount: 10000" in result.output

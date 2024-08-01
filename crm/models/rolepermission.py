@@ -1,4 +1,7 @@
-from peewee import *
+from peewee import (
+    Model,
+    ForeignKeyField,
+)
 from crm.config import db
 from .role import Role
 from .permission import Permission

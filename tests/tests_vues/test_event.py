@@ -2,7 +2,6 @@ from typer.testing import CliRunner
 from crm.__main__ import app
 from crm.views.event import find_contract
 from crm.models.contract import Contract
-from crm.models.event import Event
 from unittest.mock import patch
 
 runner = CliRunner()

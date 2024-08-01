@@ -22,14 +22,14 @@ def find_client(client_id):
 
 def sign(contract):
     """Function to change true or false by yes or no"""
-    if contract.status == True:
+    if contract.status is True:
         return "Yes"
     else:
         return "No"
 
 
 def sign_fo_sdk(contract):
-    if contract.status == True:
+    if contract.status is True:
         sentry_sdk.capture_message(f"Contract sign: {contract.id}")
 
 
@@ -39,10 +39,10 @@ def get_list(status, remain):
         contracts = Contract.select()
         if status is not None:
             if status.lower() == "signed":
-                contracts = contracts.where(Contract.status == True)
+                contracts = contracts.where(Contract.status is True)
 
             elif status.lower() == "not signed":
-                contracts = contracts.where(Contract.status == False)
+                contracts = contracts.where(Contract.status is False)
 
             else:
                 typer.echo("Invalid status value")
@@ -232,7 +232,7 @@ def update_contract(
             new_client = find_client()
             contract.client = new_client
             contract.client.save()
-            typer.echo(f"Client updated successfully")
+            typer.echo("Client updated successfully")
             typer.echo(
                 f"New client details: {contract.client.first_name} {contract.client.last_name}"
             )

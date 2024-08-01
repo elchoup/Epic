@@ -3,7 +3,6 @@ from typing_extensions import Annotated, Optional
 from crm.models.client import Client
 from crm.models.user import User
 from datetime import datetime
-from peewee import fn
 from crm.auth import auth_required, check_user_and_permissions
 
 app = typer.Typer()

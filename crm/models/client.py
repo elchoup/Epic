@@ -1,4 +1,9 @@
-from peewee import *
+from peewee import (
+    Model,
+    CharField,
+    ForeignKeyField,
+    DateTimeField,
+)
 from datetime import datetime
 from crm.config import db
 from .user import User

@@ -1,7 +1,9 @@
-import jwt
-from peewee import *
+from peewee import (
+    Model,
+    CharField,
+    ForeignKeyField,
+)
 import typer
-import datetime
 from crm.config import db
 from crm.models.role import Role
 from crm.auth import generate_token

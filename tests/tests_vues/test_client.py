@@ -1,9 +1,7 @@
 from typer.testing import CliRunner
-import pytest
 from crm.models.client import Client
 from crm.views.client import check_date
 from datetime import date, datetime
-from io import StringIO
 from crm.__main__ import app
 
 runner = CliRunner()

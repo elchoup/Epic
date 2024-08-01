@@ -12,8 +12,6 @@ from crm.models.contract import Contract
 from crm.models.event import Event
 from crm.models.rolepermission import RolePermission
 from crm.models.permission import Permission
-from crm.__main__ import app
-from crm.auth import generate_token
 
 # Ajoute le répertoire parent au PYTHONPATH
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))

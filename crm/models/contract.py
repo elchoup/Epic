@@ -1,4 +1,11 @@
-from peewee import *
+from peewee import (
+    Model,
+    AutoField,
+    DecimalField,
+    ForeignKeyField,
+    DateTimeField,
+    BooleanField,
+)
 from datetime import datetime
 from crm.config import db
 from .client import Client

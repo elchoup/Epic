@@ -3,7 +3,7 @@ from typing_extensions import Annotated, Optional
 from crm.models.contract import Contract
 from crm.models.event import Event
 from crm.models.user import User
-from datetime import datetime, date
+from datetime import datetime
 from crm.auth import auth_required, check_user_and_permissions
 
 app = typer.Typer()
@@ -22,7 +22,7 @@ def find_contract(contract_id):
 def find_user(user_id):
     """Function to fin a user by id from a prompt"""
     try:
-        if user_id == None:
+        if user_id is None:
             return None
         user = User.get(id=user_id)
         if not user.role.name == "Support":
@@ -70,12 +70,12 @@ def create_event(
     user=None,
 ):
     """Functon to create an event: python -m crm event create-event or
-    python -m crm event create-event -na "name" -l "location" -a "nbre of attendees" -no "notes".
+    python -m crm event create-event -na "name" -l "location" -a "nbre of attendees" -ic "contract id" -iu "Optional support user id" -no "notes".
     AUTH REQUIRED LOGIN FIRST
     """
     try:
         contract = find_contract(contract_id)
-        if contract.status == False:
+        if contract.status is False:
             typer.echo("Contract must be sign to create an event")
             return
         if not check_user_and_permissions(
@@ -262,7 +262,7 @@ def update_event(
 
         if change_contract:
             new_contract = find_contract()
-            if new_contract.status == False:
+            if new_contract.status is False:
                 typer.echo("Contract must be sign to create an event")
                 return
             existing_event = (
@@ -399,7 +399,7 @@ def update_event_direct(
         if contract_id is not None:
             try:
                 contract = Contract.get(id=contract_id)
-                if contract.status == False:
+                if contract.status is False:
                     typer.echo("Contract must be sign to create an event")
                     return
                 existing_event = (

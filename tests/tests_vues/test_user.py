@@ -1,10 +1,8 @@
-import pytest
 import bcrypt
 import sys
 from io import StringIO
 from typer.testing import CliRunner
 from crm.models.user import User
-from crm.models.role import Role
 from crm.views.user import prompt_for_role
 from crm.__main__ import app
 
@@ -53,7 +51,7 @@ def test_prompt_for_role_no_perm(setup_db, user1):
         old_stdout = sys.stdout
         sys.stdout = mystdout = StringIO()
         try:
-            role = prompt_for_role(user1, role_name="Admin")
+            prompt_for_role(user1, role_name="Admin")
             output = mystdout.getvalue()
         finally:
             # Restaurer stdout
@@ -68,7 +66,7 @@ def test_prompt_for_role_no_exist(setup_db, user1):
         old_stdout = sys.stdout
         sys.stdout = mystdout = StringIO()
         try:
-            role = prompt_for_role(user1, role_name="No exist")
+            prompt_for_role(user1, role_name="No exist")
             output = mystdout.getvalue()
         finally:
             # Restaurer stdout
